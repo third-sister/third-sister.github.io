@@ -1,32 +1,592 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人主页</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-        body{background:#f5f7fa;color:#222;padding:40px 20px}
-        .card{max-width:520px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 12px #00000014}
-        .avatar{width:120px;height:120px;border-radius:50%;margin:0 auto 20px;display:block;object-fit:cover}
-        h1{text-align:center;font-size:24px;margin-bottom:8px}
-        .desc{text-align:center;color:#666;margin-bottom:24px;line-height:1.6}
-        .link-item{display:block;text-decoration:none;color:#222;background:#f3f4f6;padding:14px 18px;border-radius:12px;margin:10px 0;transition:0.2s}
-        .link-item:hover{background:#e9eaf0}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>六维能力档案 · Hex Profile</title>
+<meta name="description" content="六维能力雷达图 + 技能 / 标签 / 个人信息的本地化角色档案">
+<style>
+:root{
+  --bg:#0e1116; --card:#1a2029; --card2:#161b23; --line:#2a3341;
+  --txt:#e6edf3; --muted:#8b98a9;
+  --acc:#4cc9f0; --acc2:#b388ff;
+  --ok:#3ddc97; --warn:#ffb703; --danger:#ff5c7a;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; padding:20px;
+  background:radial-gradient(1200px 600px at 15% -10%, #1b2534 0%, #0e1116 62%);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:1180px;margin:0 auto;}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+  justify-content:space-between;margin-bottom:20px;
+}
+.brand{display:flex;gap:12px;align-items:center;}
+.logo{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  font-size:24px;color:#04121c;
+  background:linear-gradient(135deg,#4cc9f0,#b388ff);
+  box-shadow:0 6px 22px rgba(76,201,240,.28);
+}
+.brand h1{font-size:19px;margin:0;letter-spacing:.02em;}
+.brand .sub{margin:1px 0 0;font-size:12px;color:var(--muted);}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;}
+
+/* ---------- 按钮 ---------- */
+.btn{
+  border:1px solid var(--line);background:#1e2632;color:var(--txt);
+  padding:8px 14px;border-radius:10px;font-size:13px;cursor:pointer;
+  font-family:inherit;transition:.16s;white-space:nowrap;
+}
+.btn:hover{background:#27313f;border-color:#3a4657;}
+.btn:active{transform:translateY(1px);}
+.btn.primary{
+  background:linear-gradient(135deg,#3a86ff,#4cc9f0);
+  border:none;color:#04121c;font-weight:700;
+}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.ghost{background:transparent;}
+.btn.danger{color:#ff8fa3;border-color:#4a2530;background:transparent;}
+.btn.danger:hover{background:#3a1a22;}
+.btn.mini{padding:4px 9px;font-size:12px;border-radius:8px;}
+.hidden{display:none !important;}
+
+/* ---------- 布局 ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0;}
+@media(max-width:880px){.grid{grid-template-columns:1fr;}}
+
+/* ---------- 卡片 ---------- */
+.card{
+  background:linear-gradient(180deg,var(--card),var(--card2));
+  border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+}
+.card-title{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px;font-weight:700;
+}
+
+/* ---------- 雷达图 ---------- */
+.chart-wrap{width:100%;max-width:440px;margin:0 auto;}
+.chart-wrap svg{width:100%;height:auto;display:block;overflow:visible;}
+.rlabel{fill:#c9d6e3;font-size:13px;font-weight:600;}
+.rvalue{fill:var(--acc);font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;}
+.handle{cursor:grab;}
+.handle:active{cursor:grabbing;}
+
+/* ---------- 滑块 ---------- */
+.sliders{display:grid;gap:10px;margin-top:16px;}
+.slider-row{display:grid;grid-template-columns:76px 1fr 32px;gap:10px;align-items:center;}
+.slider-row .val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--acc);text-align:right;}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+  background:var(--line);outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--acc);border:2px solid #0e1116;cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;background:var(--acc);
+  border:2px solid #0e1116;cursor:pointer;
+}
+
+/* ---------- 表单控件 ---------- */
+.inp{
+  background:#0f141b;border:1px solid var(--line);color:var(--txt);
+  border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;
+  width:100%;transition:.15s;
+}
+.inp:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(76,201,240,.12);}
+textarea.inp{resize:vertical;line-height:1.65;}
+select.inp{cursor:pointer;}
+.field{display:grid;gap:6px;margin-bottom:12px;}
+.field > label{font-size:12px;color:var(--muted);}
+
+/* ---------- 个人信息 ---------- */
+.profile-view{display:flex;gap:16px;align-items:flex-start;}
+.avatar{
+  width:66px;height:66px;flex:0 0 auto;border-radius:18px;
+  display:grid;place-items:center;font-size:32px;
+  background:linear-gradient(135deg,rgba(76,201,240,.18),rgba(179,136,255,.18));
+  border:1px solid rgba(76,201,240,.3);
+}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-width:0;}
+@media(max-width:520px){.kv{grid-template-columns:1fr;}}
+.kv-item{
+  background:#141a22;border:1px solid #222b37;border-radius:10px;
+  padding:7px 11px;min-width:0;
+}
+.kv-item .k{display:block;font-size:11px;color:var(--muted);}
+.kv-item .v{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ---------- 标签 ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 11px;border-radius:999px;font-size:12px;
+  background:rgba(76,201,240,.11);
+  border:1px solid rgba(76,201,240,.32);
+  color:#9fe6ff;
+}
+.chip button{
+  background:none;border:none;color:inherit;cursor:pointer;
+  font-size:14px;line-height:1;padding:0 0 0 2px;opacity:.7;
+}
+.chip button:hover{opacity:1;color:var(--danger);}
+#tagInput{margin-top:10px;}
+
+/* ---------- 技能 ---------- */
+.skill-list{list-style:none;margin:0;padding:0;display:grid;gap:13px;}
+.skill{border-left:2px solid rgba(76,201,240,.42);padding-left:12px;}
+.skill-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
+.skill-name{font-weight:600;font-size:14px;}
+.stars{color:var(--warn);font-size:12px;letter-spacing:1.5px;}
+.skill-desc{margin:3px 0 0;color:var(--muted);font-size:13px;}
+.skill-edits{display:grid;gap:10px;margin-bottom:12px;}
+.skill-edit{
+  background:#141a22;border:1px solid #222b37;border-radius:11px;
+  padding:10px;display:grid;gap:8px;
+}
+.se-head{display:grid;grid-template-columns:1fr 108px auto;gap:8px;}
+
+/* ---------- 其他 ---------- */
+.bio{margin:0;white-space:pre-wrap;color:#c9d6e3;}
+.muted{color:var(--muted);}
+.foot{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--muted);
+}
+#toast{
+  position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);
+  background:#1f2937;border:1px solid #374151;color:#e6edf3;
+  padding:10px 20px;border-radius:999px;font-size:13px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:99;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
 </head>
 <body>
-    <div class="card">
-        <!-- ===================== 个人配置区，这里随便改 ===================== -->
-        <img class="avatar" src="https://xxx你的头像地址.jpg" alt="头像">
-        <h1>你的名字</h1>
-        <p class="desc">个人简介、一句话介绍，爱好、说明等</p>
-        <a class="link-item" href="https://github.com/xxx">🔗 GitHub</a>
-        <a class="link-item" href="https://xxx">📧 邮箱</a>
-        <a class="link-item" href="https://xxx">🌐 其他链接</a>
-        <!-- ============================================================== -->
-    </div>
-</body>
-    <a href="https://vscode.dev/github/你的用户名/你的用户名.github.io" target="_blank">✏️ 编辑本站（登录GitHub）</a>
 
-</html>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⬡</div>
+      <div>
+        <h1>六维能力档案</h1>
+        <p class="sub" id="subline">—</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" id="btnEdit">编辑</button>
+      <button class="btn primary hidden" id="btnSave">保存</button>
+      <button class="btn ghost hidden" id="btnCancel">取消</button>
+      <button class="btn ghost" id="btnExport">导出</button>
+      <button class="btn ghost" id="btnImport">导入</button>
+      <button class="btn danger" id="btnClear">清空</button>
+      <input type="file" id="fileInput" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <main class="grid">
+    <div class="col">
+      <section class="card">
+        <h2 class="card-title">能力雷达</h2>
+        <div class="chart-wrap" id="chartWrap"></div>
+        <div class="sliders" id="sliders"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">标签</h2>
+        <div id="tagsBox"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <h2 class="card-title">基本信息</h2>
+        <div id="profileBox"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">简述</h2>
+        <div id="bioBox"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">技能</h2>
+        <div id="skillsBox"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <span id="storageInfo">—</span>
+    <button class="btn ghost mini" id="btnPurge">清理过期缓存</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   1. 常量与存储层
+   ========================================================= */
+const STORAGE_KEY   = 'hexcard.profile.v3';       // 主数据
+const BACKUP_PREFIX = 'hexcard.backup.';          // 自动备份前缀
+const MAX_BACKUPS   = 3;                          // 最多保留几份自动备份
+const BACKUP_TTL    = 7 * 24 * 3600 * 1000;       // 备份 7 天后自动过期
+const BACKUP_GAP    = 60 * 1000;                  // 两次备份最小间隔
+
+// 历史版本 / 其他遗留键，启动时自动清理
+const LEGACY_KEYS = [
+  'hexcard.profile.v1',
+  'hexcard.profile.v2',
+  'hexcard.data',
+  'sixdim.profile',
+  'six-dim-data',
+  'sixdim.data'
+];
+
+const CHART = { cx: 220, cy: 200, R: 105, w: 440, h: 400 };
+
+/* ---------- 默认数据 ---------- */
+function defaultData(){
+  return {
+    version: 3,
+    profile: { name:'新角色', age:'', school:'', job:'', emoji:'🧑‍🚀', bio:'点击右上角「编辑」，写下这个角色的简述。' },
+    abilities: [
+      { name:'体质', value:60 },
+      { name:'智力', value:75 },
+      { name:'社交', value:50 },
+      { name:'创造', value:70 },
+      { name:'意志', value:65 },
+      { name:'技艺', value:55 }
+    ],
+    tags: ['示例标签'],
+    skills: [{ name:'示例技能', level:3, desc:'一句话说明这项能力。' }],
+    updatedAt: Date.now()
+  };
+}
+
+/* ---------- 工具 ---------- */
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+));
+function fmtBytes(b){
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(2) + ' MB';
+}
+function fmtDate(ts){
+  if (!ts) return '—';
+  const d = new Date(ts), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ---------- 数据清洗 / 兼容 ---------- */
+function normalize(raw){
+  const base = defaultData();
+  if (!raw || typeof raw !== 'object') return base;
+
+  const out = Object.assign({}, base, raw);
+  out.profile = Object.assign({}, base.profile, (raw.profile && typeof raw.profile === 'object') ? raw.profile : {});
+
+  out.abilities = (Array.isArray(raw.abilities) && raw.abilities.length === 6)
+    ? raw.abilities.map(a => ({
+        name: String((a && a.name) ?? ''),
+        value: clamp(Math.round(Number(a && a.value) || 0), 0, 100)
+      }))
+    : base.abilities.map(a => Object.assign({}, a));
+
+  out.tags = Array.isArray(raw.tags)
+    ? raw.tags.map(t => String(t)).filter(Boolean).slice(0, 60)
+    : [];
+
+  out.skills = Array.isArray(raw.skills)
+    ? raw.skills.map(s => ({
+        name: String((s && s.name) ?? ''),
+        level: clamp(parseInt(s && s.level, 10) || 1, 1, 5),
+        desc: String((s && s.desc) ?? '')
+      })).slice(0, 100)
+    : [];
+
+  out.updatedAt = Number(raw.updatedAt) || Date.now();
+  out.version = 3;
+  return out;
+}
+
+/* ---------- 备份 ---------- */
+let lastBackupAt = 0;
+
+function backupKeys(){
+  const list = [];
+  try{
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf(BACKUP_PREFIX) === 0) list.push(k);
+    }
+  }catch(e){}
+  return list.sort(); // 时间戳升序，最旧在前
+}
+
+function pruneBackups(){
+  const now = Date.now();
+  // 1) 删除超过 TTL 的
+  backupKeys().forEach(k => {
+    const ts = Number(k.slice(BACKUP_PREFIX.length));
+    if (!isFinite(ts) || now - ts > BACKUP_TTL) {
+      try{ localStorage.removeItem(k); }catch(e){}
+    }
+  });
+  // 2) 数量超限则删最旧的
+  const keys = backupKeys();
+  while (keys.length > MAX_BACKUPS) {
+    try{ localStorage.removeItem(keys.shift()); }catch(e){ break; }
+  }
+}
+
+function cleanLegacy(){
+  let n = 0;
+  LEGACY_KEYS.forEach(k => {
+    try{
+      if (localStorage.getItem(k) !== null){ localStorage.removeItem(k); n++; }
+    }catch(e){}
+  });
+  return n;
+}
+
+/* ---------- 读写 ---------- */
+function load(){
+  let raw = null;
+  try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if (!raw) return defaultData();
+  try{
+    return normalize(JSON.parse(raw));
+  }catch(e){
+    console.warn('[hexcard] 数据损坏，已回退到默认值', e);
+    return defaultData();
+  }
+}
+
+function save(data){
+  data.updatedAt = Date.now();
+  const payload = JSON.stringify(data);
+
+  let prev = null;
+  try{ prev = localStorage.getItem(STORAGE_KEY); }catch(e){}
+
+  try{
+    localStorage.setItem(STORAGE_KEY, payload);
+  }catch(e){
+    // 空间不足：先牺牲备份再试一次
+    try{
+      backupKeys().forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(STORAGE_KEY, payload);
+    }catch(e2){
+      toast('保存失败：本地存储空间不足');
+      return false;
+    }
+  }
+
+  // 每隔一段时间，把「上一版」数据存为备份，便于误操作后恢复
+  if (prev && Date.now() - lastBackupAt > BACKUP_GAP){
+    lastBackupAt = Date.now();
+    try{
+      localStorage.setItem(BACKUP_PREFIX + Date.now(), prev);
+      pruneBackups();
+    }catch(e){ /* 忽略，节约空间优先 */ }
+  }
+  return true;
+}
+
+function storageSize(){
+  let bytes = 0;
+  try{
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.indexOf('hexcard') === 0){
+        bytes += (k.length + (localStorage.getItem(k) || '').length) * 2; // UTF-16
+      }
+    }
+  }catch(e){}
+  return bytes;
+}
+
+/* =========================================================
+   2. 状态
+   ========================================================= */
+const state = { data: null, draft: null, editing: false };
+let dragging = null;
+
+/* =========================================================
+   3. 渲染
+   ========================================================= */
+function render(){
+  const d = state.editing ? state.draft : state.data;
+
+  document.getElementById('subline').textContent = state.editing
+    ? '编辑模式 · 修改完成后请点击「保存」'
+    : `最后更新：${fmtDate(state.data.updatedAt)}`;
+
+  document.getElementById('btnEdit').classList.toggle('hidden', state.editing);
+  document.getElementById('btnSave').classList.toggle('hidden', !state.editing);
+  document.getElementById('btnCancel').classList.toggle('hidden', !state.editing);
+
+  renderChart(d);
+  renderSliders(d);
+  renderProfile(d);
+  renderBio(d);
+  renderTags(d);
+  renderSkills(d);
+  renderFooter();
+}
+
+/* ---------- 雷达图 ---------- */
+function renderChart(d){
+  const abs = d.abilities;
+  const { cx, cy, R, w, h } = CHART;
+  const n = 6;
+  const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n;
+  const pt = (i, r) => [cx + Math.cos(ang(i)) * r, cy + Math.sin(ang(i)) * r];
+  const fp = p => p[0].toFixed(1) + ',' + p[1].toFixed(1);
+
+  let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="六维能力雷达图" xmlns="http://www.w3.org/2000/svg">`;
+
+  s += `<defs>
+    <linearGradient id="hexFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4cc9f0" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#b388ff" stop-opacity="0.22"/>
+    </linearGradient>
+    <filter id="hexGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`;
+
+  // 同心六边形网格
+  for (let lv = 1; lv <= 4; lv++){
+    const r = R * lv / 4;
+    const pts = abs.map((_, i) => fp(pt(i, r))).join(' ');
+    s += `<polygon points="${pts}" fill="none" stroke="#2a3341" stroke-width="1"
+          ${lv < 4 ? 'stroke-dasharray="3 4"' : ''}/>`;
+  }
+  // 轴线
+  abs.forEach((_, i) => {
+    const p = pt(i, R);
+    s += `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}"
+          stroke="#2a3341" stroke-width="1"/>`;
+  });
+
+  // 数据多边形
+  const dataPts = abs.map((a, i) => fp(pt(i, R * clamp(a.value, 0, 100) / 100))).join(' ');
+  s += `<polygon points="${dataPts}" fill="url(#hexFill)" stroke="#4cc9f0"
+        stroke-width="2" stroke-linejoin="round" filter="url(#hexGlow)"/>`;
+
+  // 顶点 + 标签
+  abs.forEach((a, i) => {
+    const r = R * clamp(a.value, 0, 100) / 100;
+    const p = pt(i, r);
+    s += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4.5"
+          fill="#4cc9f0" stroke="#0e1116" stroke-width="2"/>`;
+
+    const lp = pt(i, R + 34);
+    const anchor = Math.abs(lp[0] - cx) < 1 ? 'middle' : (lp[0] > cx ? 'start' : 'end');
+    s += `<text class="rlabel" x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}"
+          text-anchor="${anchor}" dominant-baseline="middle">${esc(a.name)}</text>`;
+    s += `<text class="rvalue" x="${lp[0].toFixed(1)}" y="${(lp[1] + 16).toFixed(1)}"
+          text-anchor="${anchor}" dominant-baseline="middle">${Math.round(a.value)}</text>`;
+
+    if (state.editing){
+      s += `<circle class="handle" data-idx="${i}" cx="${p[0].toFixed(1)}"
+            cy="${p[1].toFixed(1)}" r="15" fill="transparent"/>`;
+    }
+  });
+
+  s += `</svg>`;
+  document.getElementById('chartWrap').innerHTML = s;
+}
+
+/* ---------- 能力滑块（仅编辑模式） ---------- */
+function renderSliders(d){
+  const box = document.getElementById('sliders');
+  if (!state.editing){ box.innerHTML = ''; return; }
+  box.innerHTML = d.abilities.map((a, i) => `
+    <div class="slider-row">
+      <input class="inp" style="padding:5px 8px;font-size:12px" value="${esc(a.name)}"
+             data-ability-name="${i}" maxlength="8" title="能力名称">
+      <input type="range" min="0" max="100" step="1" value="${Math.round(a.value)}" data-ability="${i}">
+      <span class="val" data-ability-out="${i}">${Math.round(a.value)}</span>
+    </div>`).join('');
+}
+
+/* ---------- 基本信息 ---------- */
+function renderProfile(d){
+  const p = d.profile;
+  const el = document.getElementById('profileBox');
+
+  if (state.editing){
+    el.innerHTML = `
+      <div class="field"><label>姓名</label>
+        <input class="inp" data-field="name" value="${esc(p.name)}" placeholder="角色姓名"></div>
+      <div class="field"><label>年龄</label>
+        <input class="inp" data-field="age" value="${esc(p.age)}" placeholder="如 17 / 未知"></div>
+      <div class="field"><label>学校</label>
+        <input class="inp" data-field="school" value="${esc(p.school)}" placeholder="就读学校"></div>
+      <div class="field"><label>职业</label>
+        <input class="inp" data-field="job" value="${esc(p.job)}" placeholder="职业 / 身份"></div>
+      <div class="field" style="margin-bottom:0"><label>头像 Emoji</label>
+        <input class="inp" data-field="emoji" value="${esc(p.emoji)}" maxlength="4" placeholder="🧑‍🚀"></div>`;
+  } else {
+    const item = (k, v) => `<div class="kv-item"><span class="k">${k}</span>
+      <span class="v" title="${esc(v)}">${esc(v) || '—'}</span></div>`;
+    el.innerHTML = `
+      <div class="profile-view">
+        <div class="avatar">${esc(p.emoji) || '🧑'}</div>
+        <div class="kv">
+          ${item('姓名', p.name)}
+          ${item('年龄', p.age)}
+          ${item('学校', p.school)}
+          ${item('职业', p.job)}
+        </div>
+      </div>`;
+  }
+}
+
+/* ---------- 简述 ---------- */
+function renderBio(d){
+  const el = document.getElementById('bioBox');
+  if (state.editing){
+    el.innerHTML = `<textarea class="inp" rows="4" data-field="bio"
+      placeholder="写一段这个角色的简述……">${esc(d.profile.bio)}</textarea>`;
+  } else {
+    el.innerHTML = d.profile.bio
+      ? `<p class="bio">${esc(d.profile.bio)}</p>`
+      : `<p class="muted">还没有简述。</p>`;
+  }
+}
+
+/* ---------- 标签 ---------- */
+function renderTags(d){
+  const el = document.getElementById('tagsBox');
+  if (state.editing){
+    el.innerHTML = `
+      <div class="chips">
+        ${d.tags.map((t, i) => `<span class="chip">${esc(t)}
+          <button type="button" data-del-tag="${i}" title="删除标签">×</button></span>`).join('')}
+      </div>
+      <input class="inp" id="tagInput" placeholder="输入标签后按回车添加（最多 60 个）">`;
+  } else {
+   
